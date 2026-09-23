@@ -1,7 +1,8 @@
 import {
   Mail,
   Lock,
-  User
+  User,
+  LogOut
 } from "lucide-react";
 
 import { useState } from "react";
@@ -13,16 +14,27 @@ import { Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { toast } from "sonner";
 
+const MIN_PASSWORD_LENGTH = 8
+const PASSWORD_HINT = `A senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres`
+
 export function Signup() {
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
   const [password, setPassword] = useState("")
+  const [passwordInvalid, setPasswordInvalid] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const signup = useAuthStore((state) => state.signup)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setPasswordInvalid(true)
+      return
+    }
+
+    setPasswordInvalid(false)
     setLoading(true)
 
     try {
@@ -85,29 +97,30 @@ export function Signup() {
                 id="password"
                 label="Senha"
                 type="password"
-                placeholder="********"
+                placeholder="Digite sua senha"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (passwordInvalid) setPasswordInvalid(false)
+                }}
                 required
                 icon={Lock}
+                helperText={PASSWORD_HINT}
+                error={passwordInvalid ? PASSWORD_HINT : undefined}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full mt-2" disabled={loading}>
               Cadastrar
             </Button>
           </form>
-        </CardContent>
-      </Card>
-      <Card className="w-full max-w-md rounded-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Já tem uma conta?
-          </CardTitle>
-          <CardDescription>Cadastre-se agora mesmo</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="secondary" className="w-full" asChild >
-            <Link to="/login"> Fazer login </Link>
+          <div className="relative w-full h-5 flex items-center justify-center my-6">
+            <hr className="w-full"/>
+            <span className="absolute inline-block bg-white px-3 text-gray-500">ou</span>
+          </div>
+
+          <p className="text-center text-gray-600 mb-4">Já tem uma conta?</p>
+          <Button variant="secondary" className="w-full text-gray-700" asChild>
+            <Link to="/login"> <LogOut /> Fazer login </Link>
           </Button>
         </CardContent>
       </Card>

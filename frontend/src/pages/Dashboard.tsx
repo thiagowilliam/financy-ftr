@@ -1,6 +1,6 @@
 import { Page } from "@/components/Page";
 
-export function TestePage() {
+export function Dashboard() {
 
   return (
     <Page>

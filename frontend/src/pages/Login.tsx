@@ -80,7 +80,7 @@ export function Login() {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between ml-1">
               <Field orientation="horizontal" className="w-auto gap-2">
                 <Checkbox id="remember-me" name="remember-me" />
                 <FieldLabel htmlFor="remember-me" className="text-gray-700 text-sm">
@@ -105,7 +105,7 @@ export function Login() {
           </div>
 
           <p className="text-center text-gray-600 mb-4">Ainda não tem uma conta?</p>
-          <Button variant="secondary" className="w-full" asChild>
+          <Button variant="secondary" className="w-full text-gray-700" asChild>
             <Link to="/signup"> <UserRoundPlus /> Criar conta </Link>
           </Button>
         </CardContent>

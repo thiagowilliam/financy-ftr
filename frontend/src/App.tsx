@@ -5,7 +5,7 @@ import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { useAuthStore } from "./stores/auth";
-import { TestePage } from "./pages/Teste";
+import { Dashboard } from "./pages/Dashboard";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -21,11 +21,6 @@ export function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={
-          <PublicRoute>
-            <StyleGuidePage />
-          </PublicRoute>
-          } />
         <Route path="/login" element={
           <PublicRoute>
             <Login />
@@ -43,7 +38,7 @@ export function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <TestePage />
+              <Dashboard />
             </ProtectedRoute>
           }
         />
