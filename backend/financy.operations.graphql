@@ -1,0 +1,169 @@
+# =============================================================
+# financy API - operacoes prontas para o playground do GraphQL
+# Cole este arquivo inteiro no editor. No Apollo Sandbox e no
+# Altair, cada operacao nomeada aparece em um seletor separado.
+#
+# Fluxo: SignIn -> copie o token -> Headers:
+# { "Authorization": "Bearer SEU_TOKEN" }
+# =============================================================
+
+# ---------------------------- AUTH ---------------------------
+
+mutation SignUp {
+  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "123456" }) {
+    token
+    user { id name email createdAt }
+  }
+}
+
+mutation SignIn {
+  signIn(data: { email: "demo@financy.dev", password: "123456" }) {
+    token
+    user { id name email }
+  }
+}
+
+mutation SignInSenhaErrada {
+  signIn(data: { email: "demo@financy.dev", password: "senha-errada" }) {
+    token
+  }
+}
+
+query Me {
+  me { id name email createdAt updatedAt }
+}
+
+# ------------------------- CATEGORIAS ------------------------
+
+query Categories {
+  categories { id name type color createdAt }
+}
+
+query CategoryById($id: ID!) {
+  category(id: $id) { id name type color createdAt updatedAt }
+}
+
+mutation CreateCategory {
+  createCategory(data: { name: "Assinaturas", type: EXPENSE, color: "#14B8A6" }) {
+    id name type color
+  }
+}
+
+mutation CreateCategoryCorInvalida {
+  createCategory(data: { name: "Pets", type: EXPENSE, color: "verde" }) {
+    id name
+  }
+}
+
+mutation UpdateCategory($id: ID!) {
+  updateCategory(id: $id, data: { name: "Assinaturas digitais", color: "#0EA5E9" }) {
+    id name type color updatedAt
+  }
+}
+
+mutation DeleteCategory($id: ID!) {
+  deleteCategory(id: $id)
+}
+
+# ------------------------- TRANSACOES ------------------------
+
+# amount sempre em CENTAVOS: 15990 equivale a R$ 159,90
+mutation CreateTransaction($categoryId: ID) {
+  createTransaction(
+    data: {
+      description: "Mercado da semana"
+      amount: 15990
+      type: EXPENSE
+      date: "2026-09-09T12:00:00.000Z"
+      categoryId: $categoryId
+    }
+  ) {
+    id description amount type date
+    category { id name type }
+  }
+}
+
+mutation CreateTransactionSemCategoria {
+  createTransaction(
+    data: {
+      description: "Reembolso avulso"
+      amount: 5000
+      type: INCOME
+      date: "2026-09-01T12:00:00.000Z"
+    }
+  ) {
+    id description amount type date categoryId
+  }
+}
+
+mutation CreateTransactionTipoDivergente($categoryId: ID) {
+  createTransaction(
+    data: {
+      description: "Tipo errado"
+      amount: 1000
+      type: INCOME
+      date: "2026-09-01T12:00:00.000Z"
+      categoryId: $categoryId
+    }
+  ) {
+    id description
+  }
+}
+
+mutation CreateTransactionAmountInvalido {
+  createTransaction(
+    data: {
+      description: "Valor zerado"
+      amount: 0
+      type: EXPENSE
+      date: "2026-09-01T12:00:00.000Z"
+    }
+  ) {
+    id
+  }
+}
+
+query Transactions {
+  transactions {
+    id description amount type date
+    category { id name color }
+  }
+}
+
+query TransactionsPorTipo {
+  transactions(filters: { type: EXPENSE }) {
+    id description amount date
+    category { name }
+  }
+}
+
+query TransactionsFiltradas($filters: ListTransactionsInput) {
+  transactions(filters: $filters) {
+    id description amount date
+    category { name type }
+  }
+}
+
+query TransactionById($id: ID!) {
+  transaction(id: $id) {
+    id description amount type date
+    category { id name }
+  }
+}
+
+mutation UpdateTransaction($id: ID!) {
+  updateTransaction(id: $id, data: { description: "Mercado do mes", amount: 24500 }) {
+    id description amount type updatedAt
+  }
+}
+
+mutation RemoverCategoriaDaTransacao($id: ID!) {
+  updateTransaction(id: $id, data: { categoryId: null }) {
+    id description categoryId
+    category { id }
+  }
+}
+
+mutation DeleteTransaction($id: ID!) {
+  deleteTransaction(id: $id)
+}

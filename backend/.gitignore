@@ -1,0 +1,10 @@
+node_modules
+.env
+*.db
+*.db-journal
+.biome
+.cache
+*.tsbuildinfo
+.DS_Store
+
+# prisma/migrations e versionado de proposito e NAO deve ser ignorado
