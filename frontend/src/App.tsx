@@ -6,6 +6,8 @@ import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { useAuthStore } from "./stores/auth";
 import { Dashboard } from "./pages/Dashboard";
+import { Transactions } from "./pages/Transactions";
+import { Categories } from "./pages/Categories";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -39,6 +41,22 @@ export function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <Transactions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/categories"
+          element={
+            <ProtectedRoute>
+              <Categories />
             </ProtectedRoute>
           }
         />
