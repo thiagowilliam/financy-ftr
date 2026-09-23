@@ -1,6 +1,8 @@
-# financy
+# Financy — Backend
 
 API GraphQL de finanças pessoais com autenticação JWT, isolamento de dados por usuário e CRUD de categorias e transações.
+
+É consumida pela SPA em [`frontend/`](../frontend/README.md). A visão geral do projeto está no [README da raiz](../README.md).
 
 Stack: TypeScript (ESM puro), Apollo Server 5 sobre Express 5, TypeGraphQL 2, Prisma 6 com SQLite, Biome para lint e format. Gerenciador de pacotes: **pnpm**. Execução apenas em desenvolvimento via `tsx watch`, sem etapa de build.
 
@@ -163,6 +165,39 @@ Playground disponível em `http://localhost:4000/graphql`.
 
 Usuário do seed: `demo@financy.dev` / `123456`.
 
+## Adicionar um usuário
+
+Há três caminhos, dependendo do que você precisa.
+
+**1. Rodar o seed.** Recria o usuário demo com um conjunto de dados realista: 6 categorias e 10 transações espalhadas pelos últimos meses.
+
+```bash
+pnpm seed
+```
+
+O seed é idempotente: ele faz `upsert` do usuário e apaga as categorias e transações dele antes de recriar, então pode ser executado quantas vezes for preciso sem duplicar nada. Para mudar as credenciais ou os dados gerados, edite as constantes no topo de `prisma/seed.ts`.
+
+**2. Usar a mutation `signUp`.** É o caminho normal da aplicação, o mesmo usado pela tela de cadastro do frontend. No playground em `http://localhost:4000/graphql`:
+
+```graphql
+mutation SignUp {
+  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "123456" }) {
+    token
+    user { id name email }
+  }
+}
+```
+
+A senha passa por `bcrypt` antes de ser gravada e a resposta já devolve o JWT pronto para ser usado no header `Authorization`. O e-mail é normalizado para minúsculas e precisa ser único — um e-mail repetido retorna um erro `CONFLICT`. A senha tem mínimo de 6 caracteres.
+
+**3. Inspecionar ou editar direto no banco.** Para conferir o que foi gravado ou ajustar um registro pontual:
+
+```bash
+pnpm prisma studio
+```
+
+Evite criar usuários por aqui: o campo `password` guarda um hash, e um valor em texto puro inserido manualmente nunca vai autenticar.
+
 ## Scripts
 
 | Script | O que faz |
@@ -175,6 +210,93 @@ Usuário do seed: `demo@financy.dev` / `123456`.
 | `pnpm lint:fix` | Aplica as correções automáticas |
 | `pnpm format` | Formata os arquivos |
 | `pnpm typecheck` | `tsc --noEmit` |
+
+Os comandos do Prisma que não têm atalho no `package.json` são chamados direto pelo binário: `pnpm prisma studio`, `pnpm prisma migrate reset`, `pnpm prisma migrate deploy`.
+
+## Tecnologias
+
+### Runtime e API
+
+| Dependência | Papel no projeto |
+| --- | --- |
+| `@apollo/server` 5 | Servidor GraphQL |
+| `@as-integrations/express5` | Adaptador que pluga o Apollo no Express 5 |
+| `express` 5 | Servidor HTTP e camada de middlewares |
+| `graphql` 16 | Implementação de referência do GraphQL |
+| `type-graphql` 2 | Gera o schema GraphQL a partir de classes e decorators TypeScript |
+| `reflect-metadata` | Metadados em runtime, exigidos pelos decorators do TypeGraphQL |
+| `cors` | Libera o acesso do frontend, com a origem controlada por `CORS_ORIGIN` |
+
+### Persistência
+
+| Dependência | Papel no projeto |
+| --- | --- |
+| `prisma` / `@prisma/client` 6 | ORM, migrations e client tipado |
+| SQLite | Banco de dados, em arquivo local (`prisma/dev.db`) |
+
+### Segurança
+
+| Dependência | Papel no projeto |
+| --- | --- |
+| `bcryptjs` | Hash das senhas |
+| `jsonwebtoken` | Emissão e verificação dos tokens JWT |
+
+### Desenvolvimento
+
+| Dependência | Papel no projeto |
+| --- | --- |
+| `tsx` | Executa TypeScript direto, com watch mode — dispensa etapa de build |
+| `typescript` 5.9 | Tipagem estática, em ESM puro |
+| `@biomejs/biome` 2 | Lint, formatação e organização de imports |
+
+Não há dependência de `dotenv`: o `.env` é lido pelo recurso nativo `process.loadEnvFile` do Node 22, em `src/config/env.ts`. A validação de inputs também é feita sem biblioteca externa, pelos helpers de `src/utils/validators.ts`.
+
+## Estrutura de pastas
+
+```
+backend/
+├── prisma/
+│   ├── schema.prisma             # modelos User, Category e Transaction
+│   ├── migrations/               # histórico versionado (vai para o Git)
+│   ├── seed.ts                   # usuário demo + categorias + transações
+│   └── dev.db                    # banco local (não versionado)
+├── financy.operations.graphql    # coleção de operações para testar a API
+└── src/
+    ├── index.ts                  # entrypoint: carrega reflect-metadata e sobe o server
+    ├── server.ts                 # Express + Apollo + CORS
+    ├── config/env.ts             # leitura e validação das variáveis de ambiente
+    ├── graphql/
+    │   ├── schema.ts             # buildSchema: resolvers, authChecker, middlewares
+    │   ├── context.ts            # extrai o userId do header Authorization
+    │   └── auth-checker.ts       # regra do @Authorized()
+    ├── modules/                  # um diretório por domínio
+    │   ├── auth/                 # signUp e signIn
+    │   ├── user/                 # query me
+    │   ├── category/             # CRUD de categorias
+    │   └── transaction/          # CRUD de transações
+    ├── middlewares/
+    │   ├── error-interceptor.middleware.ts
+    │   └── logger.middleware.ts
+    ├── shared/
+    │   ├── enums/                # TransactionType
+    │   └── errors/               # AppError e suas especializações
+    ├── lib/prisma.ts             # instância única do Prisma Client
+    └── utils/                    # jwt, password, require-user-id, validators
+```
+
+### Anatomia de um módulo
+
+Todo módulo de domínio segue o mesmo desenho, o que torna qualquer um deles previsível depois de ler o primeiro:
+
+```
+modules/transaction/
+├── transaction.resolver.ts   # queries e mutations; sem regra de negócio
+├── transaction.service.ts    # regra de negócio, validação e acesso ao banco
+├── transaction.model.ts      # @ObjectType exposto no schema
+└── dtos/                     # @InputType de cada operação
+```
+
+O resolver é uma casca fina: ele resolve o `userId` com `requireUserId(ctx)` e delega ao service. Toda validação, checagem de posse e conversão de tipo acontece no service. Erros de domínio são lançados como subclasses de `AppError` (`ConflictError`, `NotFoundError`, `UnauthorizedError`, `ValidationError`) e o `ErrorInterceptor` os traduz para uma resposta GraphQL com código legível, em vez de vazar o erro cru do Prisma.
 
 ## Decisões relevantes
 
