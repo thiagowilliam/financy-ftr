@@ -1,11 +1,14 @@
+import { cn } from "@/lib/utils";
+
 interface PageProps {
-  children: React.ReactNode
+  children: React.ReactNode;
+  className?: string;
 }
 
-export function Page({ children }: PageProps) {
+export function Page({ children, className }: PageProps) {
   return (
-    <div className="min-h-[calc(100vh-9rem)] bg-white rounded-xl p-12">
+    <div className={cn("min-h-[calc(100vh-9rem)] rounded-xl bg-white p-12", className)}>
       {children}
     </div>
-  )
+  );
 }

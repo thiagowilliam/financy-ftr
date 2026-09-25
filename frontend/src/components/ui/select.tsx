@@ -21,7 +21,7 @@ function SelectTrigger({ className, icon: Icon, children, ...props }: SelectTrig
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "group/trigger flex h-10 w-full items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-left text-gray-800 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 data-[placeholder]:text-gray-400 [&>span]:line-clamp-1 [&>span]:flex-1",
+        "group/trigger flex h-10 w-full items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-left text-gray-800 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 data-[placeholder]:text-gray-400 [&>span]:line-clamp-1 [&>span:first-of-type]:flex-1",
         className,
       )}
       {...props}
