@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatItemCount } from "@/lib/format";
 import { DashboardCardHeader } from "./DashboardCardHeader";
 import type { CategorySummary } from "./mock-data";
 
@@ -20,7 +20,7 @@ export function CategoriesSummary({ categories }: CategoriesSummaryProps) {
               {category.name}
             </Tag>
             <span className="whitespace-nowrap text-gray-600 text-sm">
-              {category.itemCount} itens
+              {formatItemCount(category.itemCount)}
             </span>
             <span className="w-24 whitespace-nowrap text-right font-semibold text-gray-800 text-sm">
               {formatCurrency(category.total)}

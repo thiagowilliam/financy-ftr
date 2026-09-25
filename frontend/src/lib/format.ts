@@ -8,3 +8,8 @@ export function formatCurrency(value: number): string {
   // Intl usa espaço não separável entre "R$" e o número; trocamos por espaço comum.
   return currencyFormatter.format(value).replace(/ /g, " ");
 }
+
+/** Quantidade de itens com plural, ex.: 1 -> "1 item", 3 -> "3 itens". */
+export function formatItemCount(count: number): string {
+  return `${count} ${count === 1 ? "item" : "itens"}`;
+}
