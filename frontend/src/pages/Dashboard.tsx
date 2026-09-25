@@ -3,9 +3,11 @@ import { CategoriesSummary } from "@/components/dashboard/CategoriesSummary";
 import { categories, recentTransactions, summary } from "@/components/dashboard/mock-data";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
+import { Page } from "@/components/Page";
 
 export function Dashboard() {
   return (
+    <Page>
     <div className="flex flex-col gap-6 py-8">
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <SummaryCard
@@ -35,5 +37,6 @@ export function Dashboard() {
         <CategoriesSummary categories={categories} />
       </section>
     </div>
+    </Page>
   );
 }

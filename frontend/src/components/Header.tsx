@@ -41,7 +41,7 @@ export function Header() {
               Transações
             </Link>
             <Link to="/categories" className={cn(isCategoriesPage && activeLinkClass)}>
-              Cadegorias
+              Categorias
             </Link>
           </div>
           <div className="flex items-center gap-2">
