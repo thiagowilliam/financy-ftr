@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { Page } from "@/components/Page";
 import { pagination, transactions } from "@/components/transactions/mock-data";
+import { NewTransactionDialog } from "@/components/transactions/NewTransactionDialog";
 import { TransactionsFilters } from "@/components/transactions/TransactionsFilters";
 import { TransactionsTable } from "@/components/transactions/TransactionsTable";
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,11 @@ export function Transactions() {
           <h1 className="font-bold text-2xl text-gray-800">Transações</h1>
           <p className="text-base text-gray-600">Gerencie todas as suas transações financeiras</p>
         </div>
-        <Button size="sm" icon={Plus}>
-          Nova transação
-        </Button>
+        <NewTransactionDialog>
+          <Button size="sm" icon={Plus}>
+            Nova transação
+          </Button>
+        </NewTransactionDialog>
       </header>
 
       <TransactionsFilters />

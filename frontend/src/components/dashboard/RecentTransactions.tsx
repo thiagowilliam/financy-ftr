@@ -1,4 +1,5 @@
 import { CircleArrowDown, CircleArrowUp, Plus } from "lucide-react";
+import { NewTransactionDialog } from "@/components/transactions/NewTransactionDialog";
 import { Card } from "@/components/ui/card";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Link } from "@/components/ui/link";
@@ -23,12 +24,14 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
       </ul>
 
       <div className="flex justify-center border-gray-200 border-t py-5">
-        <Link asChild className="inline-flex items-center gap-2">
-          <button type="button">
-            <Plus aria-hidden="true" className="size-5" />
-            Nova transação
-          </button>
-        </Link>
+        <NewTransactionDialog>
+          <Link asChild className="inline-flex items-center gap-2">
+            <button type="button">
+              <Plus aria-hidden="true" className="size-5" />
+              Nova transação
+            </button>
+          </Link>
+        </NewTransactionDialog>
       </div>
     </Card>
   );

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../stores/auth"
-import logoIcon from "@/assets/logo-icon.svg"
+import logo from "@/assets/logo.svg"
 import { Avatar, AvatarFallback } from "./ui/avatar"
 import { cn } from "@/lib/utils"
 import { getInitials } from "@/lib/format"
@@ -24,9 +24,9 @@ export function Header() {
   return (
     <div className="w-full px-16 pt-6 bg-white border-b-2 border-gray-200 pb-4">
       {isAuthenticated && (
-        <div className="flex justify-between w-full">
+        <div className="flex items-center justify-between w-full">
           <div className="min-w-48">
-            <img src={logoIcon} alt="Financy" />
+            <img src={logo} alt="Financy" className="h-6 w-auto" />
           </div>
           <div className="flex items-center gap-5 text-sm text-gray-600">
             <Link to="/" className={cn(isDashboardPage && activeLinkClass)}>

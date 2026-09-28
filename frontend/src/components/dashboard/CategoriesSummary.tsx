@@ -13,16 +13,17 @@ export function CategoriesSummary({ categories }: CategoriesSummaryProps) {
     <Card className="overflow-hidden border-gray-200 shadow-none">
       <DashboardCardHeader title="Categorias" linkLabel="Gerenciar" to="/categories" />
 
-      <ul className="flex flex-col gap-5 px-6 py-6">
+      {/* Grid compartilhado (subgrid) mantém as colunas de itens e valores alinhadas. */}
+      <ul className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-5 px-6 py-6">
         {categories.map((category) => (
-          <li key={category.id} className="flex items-center gap-4">
-            <Tag color={category.color} className="mr-auto">
+          <li key={category.id} className="col-span-3 grid grid-cols-subgrid items-center">
+            <Tag color={category.color} className="justify-self-start">
               {category.name}
             </Tag>
-            <span className="whitespace-nowrap text-gray-600 text-sm">
+            <span className="whitespace-nowrap text-right text-gray-600 text-sm">
               {formatItemCount(category.itemCount)}
             </span>
-            <span className="w-24 whitespace-nowrap text-right font-semibold text-gray-800 text-sm">
+            <span className="whitespace-nowrap text-right font-semibold text-gray-800 text-sm">
               {formatCurrency(category.total)}
             </span>
           </li>

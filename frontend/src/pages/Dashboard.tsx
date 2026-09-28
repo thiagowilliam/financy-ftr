@@ -7,8 +7,7 @@ import { Page } from "@/components/Page";
 
 export function Dashboard() {
   return (
-    <Page>
-    <div className="flex flex-col gap-6 py-8">
+    <Page className="flex flex-col gap-6 bg-transparent p-0 py-4">
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <SummaryCard
           label="Saldo total"
@@ -36,7 +35,6 @@ export function Dashboard() {
         </div>
         <CategoriesSummary categories={categories} />
       </section>
-    </div>
     </Page>
   );
 }
