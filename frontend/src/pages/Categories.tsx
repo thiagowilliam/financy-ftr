@@ -1,11 +1,19 @@
 import { ArrowUpDown, Plus, Tag } from "lucide-react";
+import { useState } from "react";
 import { CategoryCard } from "@/components/categories/CategoryCard";
 import { categories, overview } from "@/components/categories/mock-data";
+import { NewCategoryDialog } from "@/components/categories/NewCategoryDialog";
 import { StatCard } from "@/components/categories/StatCard";
 import { Page } from "@/components/Page";
 import { Button } from "@/components/ui/button";
 
 export function Categories() {
+  const [isNewCategoryOpen, setIsNewCategoryOpen] = useState(false);
+
+  const openNewCategoryDialog = () => {
+    setIsNewCategoryOpen(true);
+  };
+
   return (
     <Page className="flex flex-col gap-8 bg-transparent px-0 py-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -13,7 +21,7 @@ export function Categories() {
           <h1 className="font-bold text-2xl text-gray-800">Categorias</h1>
           <p className="text-base text-gray-600">Organize suas transações por categorias</p>
         </div>
-        <Button size="sm" icon={Plus}>
+        <Button size="sm" icon={Plus} onClick={openNewCategoryDialog}>
           Nova categoria
         </Button>
       </header>
@@ -44,6 +52,8 @@ export function Categories() {
           <CategoryCard key={category.id} category={category} />
         ))}
       </section>
+
+      <NewCategoryDialog open={isNewCategoryOpen} onOpenChange={setIsNewCategoryOpen} />
     </Page>
   );
 }
