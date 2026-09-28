@@ -3,27 +3,22 @@ import { useAuthStore } from "../stores/auth"
 import logoIcon from "@/assets/logo-icon.svg"
 import { Avatar, AvatarFallback } from "./ui/avatar"
 import { cn } from "@/lib/utils"
+import { getInitials } from "@/lib/format"
 
 const activeLinkClass = "text-brand-base font-semibold"
 
 export function Header() {
-  const { user, logout, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
   const isDashboardPage = location.pathname === "/"
   const isTransactionsPage = location.pathname === "/transactions"
   const isCategoriesPage = location.pathname === "/categories"
 
-  const initials = (user?.name ?? "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("")
+  const initials = getInitials(user?.name ?? "")
 
-  const handleLogout = () => {
-    logout()
-    navigate("/login")
+  const goToProfile = () => {
+    navigate("/profile")
   }
 
   return (
@@ -46,11 +41,18 @@ export function Header() {
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <Avatar>
-                <AvatarFallback className="bg-gray-300 text-gray-800" onClick={handleLogout}>
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <button
+                type="button"
+                onClick={goToProfile}
+                aria-label="Ir para o perfil"
+                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Avatar>
+                  <AvatarFallback className="bg-gray-300 text-gray-800">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
             </div>
           </div>
         </div>

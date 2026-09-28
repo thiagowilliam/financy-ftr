@@ -13,3 +13,13 @@ export function formatCurrency(value: number): string {
 export function formatItemCount(count: number): string {
   return `${count} ${count === 1 ? "item" : "itens"}`;
 }
+
+/** Iniciais do nome (até duas letras), ex.: "Conta teste" -> "CT". */
+export function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
