@@ -8,6 +8,8 @@ type InputProps = Omit<ComponentProps<"input">, "size"> &
   DemoStateProps<"focus"> & {
     label: string;
     icon?: LucideIcon;
+    /** Texto fixo exibido à esquerda do valor, ex.: "R$". */
+    startText?: string;
     helperText?: string;
     /** Mensagem de erro: ativa o estado de erro e substitui o helperText. */
     error?: string;
@@ -45,6 +47,7 @@ export function FieldMessage({
 function Input({
   label,
   icon: Icon,
+  startText,
   helperText,
   error,
   disabled,
@@ -94,7 +97,7 @@ function Input({
           data-demo-state={demoState}
           className={cn(
             "peer h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-800 text-sm caret-brand-base outline-none transition-colors placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400",
-            Icon && "pl-9",
+            (Icon || startText) && "pl-9",
             hasPasswordToggle && "pr-9",
             className,
           )}
@@ -108,6 +111,17 @@ function Input({
               iconClassName,
             )}
           />
+        )}
+        {!Icon && startText && (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm transition-colors",
+              iconClassName,
+            )}
+          >
+            {startText}
+          </span>
         )}
         {hasPasswordToggle && (
           <button
