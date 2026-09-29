@@ -1,15 +1,21 @@
 import { Field, Int, ObjectType } from "type-graphql";
 import { Category } from "../category/category.model.js";
 
-@ObjectType({ description: "Total de despesas de uma categoria no periodo." })
-export class CategorySpending {
+@ObjectType({ description: "Movimentacao de uma categoria no periodo. Valores em CENTAVOS." })
+export class CategorySummary {
   @Field(() => Category)
   category!: Category;
 
-  @Field(() => Int, { description: "Quantidade de despesas da categoria no periodo." })
+  @Field(() => Int, { description: "Quantidade de transacoes (receitas e despesas) no periodo." })
   transactionCount!: number;
 
-  @Field(() => Int, { description: "Soma das despesas em CENTAVOS." })
+  @Field(() => Int, { description: "Soma das receitas." })
+  income!: number;
+
+  @Field(() => Int, { description: "Soma das despesas." })
+  expense!: number;
+
+  @Field(() => Int, { description: "Receitas menos despesas: negativo quando gastou mais." })
   total!: number;
 }
 
@@ -24,8 +30,8 @@ export class DashboardSummary {
   @Field(() => Int, { description: "Despesas no periodo." })
   periodExpense!: number;
 
-  @Field(() => [CategorySpending], {
-    description: "Categorias com mais despesas no periodo, da maior para a menor.",
+  @Field(() => [CategorySummary], {
+    description: "Categorias com maior movimentacao no periodo, pelo valor absoluto do total.",
   })
-  topExpenseCategories!: CategorySpending[];
+  topCategories!: CategorySummary[];
 }

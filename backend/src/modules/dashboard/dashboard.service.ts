@@ -3,7 +3,7 @@ import { TransactionType } from "../../shared/enums/transaction-type.enum.js";
 import { ValidationError } from "../../shared/errors/validation.error.js";
 import { assertPositiveInt, assertValidDate } from "../../utils/validators.js";
 import { mapCategory } from "../category/category.service.js";
-import type { CategorySpending, DashboardSummary } from "./dashboard.model.js";
+import type { CategorySummary, DashboardSummary } from "./dashboard.model.js";
 import type { DashboardSummaryInput } from "./dtos/dashboard-summary.input.js";
 
 const DEFAULT_CATEGORIES_LIMIT = 5;
@@ -63,7 +63,7 @@ export const dashboardService = {
     const limit = parseLimit(input?.categoriesLimit);
     const periodWhere = { userId, date: { gte: startDate, lte: endDate } };
 
-    const [allTime, period, byCategory] = await Promise.all([
+    const [allTime, period, byCategoryAndType] = await Promise.all([
       prisma.transaction.groupBy({
         by: ["type"],
         where: { userId },
@@ -75,31 +75,50 @@ export const dashboardService = {
         _sum: { amount: true },
       }),
       prisma.transaction.groupBy({
-        by: ["categoryId"],
-        where: { ...periodWhere, type: TransactionType.EXPENSE, categoryId: { not: null } },
+        by: ["categoryId", "type"],
+        where: { ...periodWhere, categoryId: { not: null } },
         _sum: { amount: true },
         _count: { _all: true },
-        orderBy: { _sum: { amount: "desc" } },
-        take: limit,
       }),
     ]);
 
-    const categoryIds = byCategory
-      .map((group) => group.categoryId)
-      .filter((id): id is string => id !== null);
+    // Junta receitas e despesas de cada categoria.
+    const totalsByCategory = new Map<string, { income: number; expense: number; count: number }>();
+    for (const group of byCategoryAndType) {
+      if (group.categoryId === null) continue;
+      const totals = totalsByCategory.get(group.categoryId) ?? { income: 0, expense: 0, count: 0 };
+      const amount = group._sum.amount ?? 0;
+      if (group.type === TransactionType.INCOME) totals.income += amount;
+      if (group.type === TransactionType.EXPENSE) totals.expense += amount;
+      totals.count += group._count._all;
+      totalsByCategory.set(group.categoryId, totals);
+    }
+
+    // Maior movimentacao primeiro, seja saldo positivo ou negativo.
+    const ranked = [...totalsByCategory.entries()]
+      .map(([categoryId, totals]) => ({
+        categoryId,
+        ...totals,
+        net: totals.income - totals.expense,
+      }))
+      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net) || b.count - a.count)
+      .slice(0, limit);
+
     const categories = await prisma.category.findMany({
-      where: { userId, id: { in: categoryIds } },
+      where: { userId, id: { in: ranked.map((item) => item.categoryId) } },
     });
     const categoriesById = new Map(categories.map((category) => [category.id, category]));
 
-    const topExpenseCategories: CategorySpending[] = [];
-    for (const group of byCategory) {
-      const category = group.categoryId ? categoriesById.get(group.categoryId) : undefined;
+    const topCategories: CategorySummary[] = [];
+    for (const item of ranked) {
+      const category = categoriesById.get(item.categoryId);
       if (!category) continue;
-      topExpenseCategories.push({
+      topCategories.push({
         category: mapCategory(category),
-        transactionCount: group._count._all,
-        total: group._sum.amount ?? 0,
+        transactionCount: item.count,
+        income: item.income,
+        expense: item.expense,
+        total: item.net,
       });
     }
 
@@ -110,7 +129,7 @@ export const dashboardService = {
       balance: allTimeTotals.income - allTimeTotals.expense,
       periodIncome: periodTotals.income,
       periodExpense: periodTotals.expense,
-      topExpenseCategories,
+      topCategories,
     };
   },
 };

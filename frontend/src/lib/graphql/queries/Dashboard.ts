@@ -4,7 +4,7 @@ export const DASHBOARD_SUMMARY = /* GraphQL */ `
       balance
       periodIncome
       periodExpense
-      topExpenseCategories {
+      topCategories {
         category {
           id
           name
@@ -12,6 +12,8 @@ export const DASHBOARD_SUMMARY = /* GraphQL */ `
           color
         }
         transactionCount
+        income
+        expense
         total
       }
     }

@@ -3,10 +3,14 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-/** Formata um valor em reais, ex.: 1234.5 -> "R$ 1.234,50". */
+/**
+ * Formata um valor em reais, ex.: 1234.5 -> "R$ 1.234,50" e -80 -> "- R$ 80,00"
+ * (mesmo padrão de sinal usado nas listas de transações).
+ */
 export function formatCurrency(value: number): string {
   // Intl usa espaço não separável entre "R$" e o número; trocamos por espaço comum.
-  return currencyFormatter.format(value).replace(/ /g, " ");
+  const formatted = currencyFormatter.format(Math.abs(value)).replace(/ /g, " ");
+  return value < 0 ? `- ${formatted}` : formatted;
 }
 
 /** Quantidade de itens com plural, ex.: 1 -> "1 item", 3 -> "3 itens". */

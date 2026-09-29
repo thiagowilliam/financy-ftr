@@ -59,7 +59,7 @@ export function Dashboard() {
           />
         </div>
         <CategoriesSummary
-          categories={summary.data?.topExpenseCategories ?? []}
+          categories={summary.data?.topCategories ?? []}
           isLoading={summary.isPending}
           error={summaryError}
         />

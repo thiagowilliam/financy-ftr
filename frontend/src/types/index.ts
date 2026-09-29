@@ -75,10 +75,13 @@ export interface TransactionPage {
   totalPages: number
 }
 
-export interface CategorySpending {
+/** Movimentação de uma categoria no período. Valores em centavos */
+export interface CategorySummary {
   category: Pick<Category, "id" | "name" | "icon" | "color">
   transactionCount: number
-  /** Soma das despesas em centavos */
+  income: number
+  expense: number
+  /** Receitas menos despesas: negativo quando gastou mais */
   total: number
 }
 
@@ -87,5 +90,5 @@ export interface DashboardSummary {
   balance: number
   periodIncome: number
   periodExpense: number
-  topExpenseCategories: CategorySpending[]
+  topCategories: CategorySummary[]
 }
