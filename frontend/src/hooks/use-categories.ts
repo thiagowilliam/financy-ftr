@@ -6,7 +6,21 @@ import {
   deleteCategory,
   updateCategory,
 } from "@/api/categories";
+import { dashboardKeys } from "@/api/dashboard";
+import { transactionKeys } from "@/api/transactions";
 import type { Category } from "@/types";
+
+/**
+ * Editar ou excluir uma categoria muda o que as transações e o dashboard exibem
+ * (nome, cor, ícone ou "Sem categoria"), então esses caches também são invalidados.
+ */
+function invalidateCategoryDependents(queryClient: ReturnType<typeof useQueryClient>) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: categoryKeys.all }),
+    queryClient.invalidateQueries({ queryKey: transactionKeys.all }),
+    queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+  ]);
+}
 
 const byName = (a: Category, b: Category) => a.name.localeCompare(b.name, "pt-BR");
 
@@ -39,7 +53,7 @@ export function useUpdateCategory() {
       queryClient.setQueryData<Category[]>(categoryKeys.list(), (old) =>
         old?.map((category) => (category.id === updated.id ? updated : category)),
       );
-      return queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      return invalidateCategoryDependents(queryClient);
     },
   });
 }
@@ -52,7 +66,7 @@ export function useDeleteCategory() {
       queryClient.setQueryData<Category[]>(categoryKeys.list(), (old) =>
         old?.filter((category) => category.id !== deletedId),
       );
-      return queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      return invalidateCategoryDependents(queryClient);
     },
   });
 }

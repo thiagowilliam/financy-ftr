@@ -202,3 +202,27 @@ mutation RemoverCategoriaDaTransacao($id: ID!) {
 mutation DeleteTransaction($id: ID!) {
   deleteTransaction(id: $id)
 }
+
+# ------------------------- DASHBOARD -------------------------
+
+# Valores em CENTAVOS. Sem input, o periodo e o mes atual (UTC) e o limite e 5 categorias.
+query DashboardSummary {
+  dashboardSummary(
+    input: {
+      startDate: "2026-09-01T00:00:00.000Z"
+      endDate: "2026-09-30T23:59:59.999Z"
+      categoriesLimit: 5
+    }
+  ) {
+    balance
+    periodIncome
+    periodExpense
+    topCategories {
+      category { id name icon color }
+      transactionCount
+      income
+      expense
+      total
+    }
+  }
+}
