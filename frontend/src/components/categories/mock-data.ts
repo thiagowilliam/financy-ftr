@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { PaletteColor } from "@/styles/tokens";
 
-// Dados estáticos da página de Categorias enquanto a integração com a API não existe.
+// Dados estáticos usados pelo modal de nova transação enquanto ele não é integrado à API.
 
 export type Category = {
   id: string;
@@ -20,12 +20,6 @@ export type Category = {
   color: PaletteColor;
   icon: LucideIcon;
   itemCount: number;
-};
-
-export type CategoriesOverview = {
-  totalCategories: number;
-  totalTransactions: number;
-  mostUsed: { name: string; icon: LucideIcon; color: PaletteColor };
 };
 
 export const categories: Category[] = [
@@ -94,9 +88,3 @@ export const categories: Category[] = [
     itemCount: 7,
   },
 ];
-
-export const overview: CategoriesOverview = {
-  totalCategories: 8,
-  totalTransactions: 27,
-  mostUsed: { name: "Alimentação", icon: Utensils, color: "blue" },
-};

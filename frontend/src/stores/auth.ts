@@ -1,4 +1,5 @@
 import { apolloClient } from "@/lib/apollo"
+import { queryClient } from "@/lib/query-client"
 import { LOGIN } from "@/lib/graphql/mutations/Login"
 import { REGISTER } from "@/lib/graphql/mutations/Register"
 import type { LoginInput, RegisterInput, User } from "@/types"
@@ -110,6 +111,7 @@ export const useAuthStore = create<AuthState>() (
             isAuthenticated: false
           })
           apolloClient.clearStore()
+          queryClient.clear()
         },
       }),
       {

@@ -49,7 +49,10 @@ pnpm prisma migrate dev --name create_transactions
 # 5. índices de performance em transações
 pnpm prisma migrate dev --name add_transaction_indexes
 
-# 6. popular o banco
+# 6. descrição e ícone nas categorias
+pnpm prisma migrate dev --name add_category_description_icon
+
+# 7. popular o banco
 pnpm seed
 ```
 
