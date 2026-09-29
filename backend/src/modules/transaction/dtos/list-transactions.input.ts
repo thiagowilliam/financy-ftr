@@ -3,6 +3,12 @@ import { TransactionType } from "../../../shared/enums/transaction-type.enum.js"
 
 @InputType()
 export class ListTransactionsInput {
+  @Field(() => String, {
+    nullable: true,
+    description: "Busca parcial na descricao da transacao.",
+  })
+  search?: string | null;
+
   @Field(() => TransactionType, { nullable: true })
   type?: TransactionType | null;
 

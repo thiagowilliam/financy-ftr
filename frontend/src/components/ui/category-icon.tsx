@@ -17,6 +17,7 @@ const categoryIconVariants = cva(
         orange: "bg-orange-light text-orange-base",
         yellow: "bg-yellow-light text-yellow-base",
         green: "bg-green-light text-green-base",
+        gray: "bg-gray-200 text-gray-500",
       },
     },
     defaultVariants: {
@@ -27,7 +28,7 @@ const categoryIconVariants = cva(
 
 type CategoryIconProps = Omit<ComponentProps<"span">, "color" | "children"> & {
   icon: LucideIcon;
-  color?: PaletteColor;
+  color?: PaletteColor | "gray";
 };
 
 function CategoryIcon({ icon: Icon, color, className, ...props }: CategoryIconProps) {

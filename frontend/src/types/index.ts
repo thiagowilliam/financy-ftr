@@ -39,3 +39,38 @@ export interface CategoryInput {
   icon: string
   color: string
 }
+
+export interface Transaction {
+  id: string
+  description: string
+  /** Valor em centavos */
+  amount: number
+  type: TransactionTypeValue
+  /** Data ISO, ex.: 2026-09-29T12:00:00.000Z */
+  date: string
+  category: Pick<Category, "id" | "name" | "icon" | "color"> | null
+}
+
+export interface TransactionInput {
+  description: string
+  amount: number
+  type: TransactionTypeValue
+  date: string
+  categoryId: string | null
+}
+
+export interface TransactionFilters {
+  search?: string
+  type?: TransactionTypeValue
+  categoryId?: string
+  startDate?: string
+  endDate?: string
+}
+
+export interface TransactionPage {
+  items: Transaction[]
+  total: number
+  page: number
+  perPage: number
+  totalPages: number
+}

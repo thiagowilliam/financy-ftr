@@ -17,8 +17,10 @@ import {
 import { type CategoryRecord, mapCategory } from "../category/category.service.js";
 import type { CreateTransactionInput } from "./dtos/create-transaction.input.js";
 import type { ListTransactionsInput } from "./dtos/list-transactions.input.js";
+import type { PaginationInput } from "./dtos/pagination.input.js";
 import type { UpdateTransactionInput } from "./dtos/update-transaction.input.js";
 import type { Transaction } from "./transaction.model.js";
+import type { TransactionPage } from "./transaction-page.model.js";
 
 interface TransactionRecord {
   id: string;
@@ -50,27 +52,77 @@ function parseType(value: unknown, field = "type"): TransactionType {
   return toTransactionType(assertEnumValue(TRANSACTION_TYPES, value, field), field);
 }
 
-/**
- * Garante que a categoria pertence ao usuario e que o tipo da transacao
- * e igual ao tipo da categoria.
- */
-async function assertCategoryMatches(
-  userId: string,
-  categoryId: string,
-  type: TransactionType,
-): Promise<void> {
-  const category = await prisma.category.findFirst({ where: { id: categoryId, userId } });
+/** Garante que a categoria existe e pertence ao usuario. */
+async function assertCategoryBelongsToUser(userId: string, categoryId: string): Promise<void> {
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, userId },
+    select: { id: true },
+  });
   if (!category) {
     throw new NotFoundError("Categoria nao encontrada.");
   }
-  if (toTransactionType(category.type) !== type) {
-    throw new ValidationError(
-      `O tipo da transacao (${type}) deve ser igual ao tipo da categoria ` +
-        `"${category.name}" (${category.type}).`,
-      "type",
-    );
-  }
 }
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_PER_PAGE = 10;
+const MAX_PER_PAGE = 100;
+
+function parsePage(value: number | null | undefined): number {
+  if (value === undefined || value === null) {
+    return DEFAULT_PAGE;
+  }
+  return assertPositiveInt(value, "page");
+}
+
+function parsePerPage(value: number | null | undefined): number {
+  if (value === undefined || value === null) {
+    return DEFAULT_PER_PAGE;
+  }
+  const perPage = assertPositiveInt(value, "perPage");
+  if (perPage > MAX_PER_PAGE) {
+    throw new ValidationError(`O campo "perPage" deve ser no maximo ${MAX_PER_PAGE}.`, "perPage");
+  }
+  return perPage;
+}
+
+function buildWhere(
+  userId: string,
+  filters?: ListTransactionsInput | null,
+): Prisma.TransactionWhereInput {
+  const where: Prisma.TransactionWhereInput = { userId };
+
+  const search = filters?.search?.trim();
+  if (search) {
+    // No SQLite o "contains" (LIKE) ignora maiusculas/minusculas apenas em ASCII.
+    where.description = { contains: search };
+  }
+
+  if (filters?.type !== undefined && filters?.type !== null) {
+    where.type = parseType(filters.type);
+  }
+
+  if (filters?.categoryId !== undefined && filters?.categoryId !== null) {
+    where.categoryId = assertRequiredString(filters.categoryId, "categoryId");
+  }
+
+  const dateFilter: Prisma.DateTimeFilter = {};
+  if (filters?.startDate !== undefined && filters?.startDate !== null) {
+    dateFilter.gte = assertValidDate(filters.startDate, "startDate");
+  }
+  if (filters?.endDate !== undefined && filters?.endDate !== null) {
+    dateFilter.lte = assertValidDate(filters.endDate, "endDate");
+  }
+  if (dateFilter.gte !== undefined || dateFilter.lte !== undefined) {
+    where.date = dateFilter;
+  }
+
+  return where;
+}
+
+const TRANSACTION_ORDER: Prisma.TransactionOrderByWithRelationInput[] = [
+  { date: "desc" },
+  { createdAt: "desc" },
+];
 
 export const transactionService = {
   async create(userId: string, input: CreateTransactionInput): Promise<Transaction> {
@@ -84,7 +136,7 @@ export const transactionService = {
         : assertRequiredString(input.categoryId, "categoryId");
 
     if (categoryId !== null) {
-      await assertCategoryMatches(userId, categoryId, type);
+      await assertCategoryBelongsToUser(userId, categoryId);
     }
 
     const created = await prisma.transaction.create({
@@ -111,7 +163,7 @@ export const transactionService = {
     const categoryId = resolveCategoryId(input.categoryId, existing.categoryId);
 
     if (categoryId !== null) {
-      await assertCategoryMatches(userId, categoryId, type);
+      await assertCategoryBelongsToUser(userId, categoryId);
     }
 
     const updated = await prisma.transaction.update({
@@ -137,34 +189,42 @@ export const transactionService = {
   },
 
   async list(userId: string, filters?: ListTransactionsInput | null): Promise<Transaction[]> {
-    const where: Prisma.TransactionWhereInput = { userId };
-
-    if (filters?.type !== undefined && filters?.type !== null) {
-      where.type = parseType(filters.type);
-    }
-
-    if (filters?.categoryId !== undefined && filters?.categoryId !== null) {
-      where.categoryId = assertRequiredString(filters.categoryId, "categoryId");
-    }
-
-    const dateFilter: Prisma.DateTimeFilter = {};
-    if (filters?.startDate !== undefined && filters?.startDate !== null) {
-      dateFilter.gte = assertValidDate(filters.startDate, "startDate");
-    }
-    if (filters?.endDate !== undefined && filters?.endDate !== null) {
-      dateFilter.lte = assertValidDate(filters.endDate, "endDate");
-    }
-    if (dateFilter.gte !== undefined || dateFilter.lte !== undefined) {
-      where.date = dateFilter;
-    }
-
     const transactions = await prisma.transaction.findMany({
-      where,
+      where: buildWhere(userId, filters),
       include: { category: true },
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      orderBy: TRANSACTION_ORDER,
     });
 
     return transactions.map(mapTransaction);
+  },
+
+  async listPage(
+    userId: string,
+    filters?: ListTransactionsInput | null,
+    pagination?: PaginationInput | null,
+  ): Promise<TransactionPage> {
+    const page = parsePage(pagination?.page);
+    const perPage = parsePerPage(pagination?.perPage);
+    const where = buildWhere(userId, filters);
+
+    const [total, transactions] = await prisma.$transaction([
+      prisma.transaction.count({ where }),
+      prisma.transaction.findMany({
+        where,
+        include: { category: true },
+        orderBy: TRANSACTION_ORDER,
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+    ]);
+
+    return {
+      items: transactions.map(mapTransaction),
+      total,
+      page,
+      perPage,
+      totalPages: Math.max(1, Math.ceil(total / perPage)),
+    };
   },
 
   async findById(userId: string, id: string): Promise<Transaction> {
