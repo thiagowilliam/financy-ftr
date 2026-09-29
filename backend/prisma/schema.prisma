@@ -26,15 +26,19 @@ model User {
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  name      String
+  id          String   @id @default(cuid())
+  name        String
+  /// texto livre, opcional
+  description String?
   /// INCOME | EXPENSE
-  type      String
+  type        String
+  /// chave do icone exibido no frontend (ex.: utensils), opcional
+  icon        String?
   /// cor hexadecimal, opcional (ex.: #22C55E)
-  color     String?
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  color       String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]

@@ -17,7 +17,7 @@ import {
   ToolCase,
   Utensils,
 } from "lucide-react";
-import type { PaletteColor } from "@/styles/tokens";
+import { colors, type PaletteColor } from "@/styles/tokens";
 
 // Opções disponíveis no formulário de categoria.
 
@@ -51,3 +51,22 @@ export const categoryColorOptions: { value: PaletteColor; label: string }[] = [
   { value: "orange", label: "Laranja" },
   { value: "yellow", label: "Amarelo" },
 ];
+
+const DEFAULT_ICON = categoryIconOptions[0];
+const DEFAULT_COLOR: PaletteColor = "green";
+
+/** Ícone da categoria a partir da chave salva no backend (ex.: "utensils"). */
+export function getCategoryIcon(key: string | null | undefined): CategoryIconOption {
+  return categoryIconOptions.find((option) => option.value === key) ?? DEFAULT_ICON;
+}
+
+/** O backend guarda a cor em hexadecimal: usamos o tom "base" de cada cor da paleta. */
+export function paletteColorToHex(color: PaletteColor): string {
+  return colors[color].base;
+}
+
+export function hexToPaletteColor(hex: string | null | undefined): PaletteColor {
+  const normalized = hex?.toUpperCase();
+  const match = categoryColorOptions.find(({ value }) => colors[value].base === normalized);
+  return match?.value ?? DEFAULT_COLOR;
+}

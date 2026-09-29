@@ -36,17 +36,31 @@ query Me {
 # ------------------------- CATEGORIAS ------------------------
 
 query Categories {
-  categories { id name type color createdAt }
+  categories { id name description type icon color transactionCount createdAt }
 }
 
 query CategoryById($id: ID!) {
-  category(id: $id) { id name type color createdAt updatedAt }
+  category(id: $id) { id name description type icon color transactionCount createdAt updatedAt }
 }
 
 mutation CreateCategory {
-  createCategory(data: { name: "Assinaturas", type: EXPENSE, color: "#14B8A6" }) {
-    id name type color
+  createCategory(
+    data: {
+      name: "Assinaturas"
+      description: "Streaming e apps"
+      type: EXPENSE
+      icon: "ticket"
+      color: "#14B8A6"
+    }
+  ) {
+    id name description type icon color transactionCount
   }
+}
+
+# Nomes sao unicos por usuario, ignorando maiusculas/minusculas: retorna CONFLICT
+mutation CreateCategoryDuplicada {
+  createCategory(data: { name: "mercado", type: EXPENSE }) {
+    id name
 }
 
 mutation CreateCategoryCorInvalida {
@@ -56,8 +70,8 @@ mutation CreateCategoryCorInvalida {
 }
 
 mutation UpdateCategory($id: ID!) {
-  updateCategory(id: $id, data: { name: "Assinaturas digitais", color: "#0EA5E9" }) {
-    id name type color updatedAt
+  updateCategory(id: $id, data: { name: "Assinaturas digitais", icon: "receipt", color: "#0EA5E9" }) {
+    id name description type icon color updatedAt
   }
 }
 

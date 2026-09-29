@@ -14,20 +14,11 @@ import {
   assertRequiredString,
   assertValidDate,
 } from "../../utils/validators.js";
-import { mapCategory } from "../category/category.service.js";
+import { type CategoryRecord, mapCategory } from "../category/category.service.js";
 import type { CreateTransactionInput } from "./dtos/create-transaction.input.js";
 import type { ListTransactionsInput } from "./dtos/list-transactions.input.js";
 import type { UpdateTransactionInput } from "./dtos/update-transaction.input.js";
 import type { Transaction } from "./transaction.model.js";
-
-interface CategoryRecord {
-  id: string;
-  name: string;
-  type: string;
-  color: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 interface TransactionRecord {
   id: string;

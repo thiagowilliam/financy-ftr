@@ -1,4 +1,15 @@
-import { Arg, Authorized, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  FieldResolver,
+  ID,
+  Int,
+  Mutation,
+  Query,
+  Resolver,
+  Root,
+} from "type-graphql";
 import type { Context } from "../../graphql/context.js";
 import { requireUserId } from "../../utils/require-user-id.js";
 import { Category } from "./category.model.js";
@@ -39,5 +50,12 @@ export class CategoryResolver {
   @Mutation(() => Boolean)
   async deleteCategory(@Arg("id", () => ID) id: string, @Ctx() ctx: Context): Promise<boolean> {
     return categoryService.delete(requireUserId(ctx), id);
+  }
+
+  // As queries de categoria ja trazem a contagem; a consulta extra so acontece
+  // quando a categoria vem aninhada em outro tipo (ex.: Transaction.category).
+  @FieldResolver(() => Int)
+  async transactionCount(@Root() category: Category): Promise<number> {
+    return category.transactionCount ?? categoryService.countTransactions(category.id);
   }
 }
