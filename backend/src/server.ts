@@ -33,8 +33,15 @@ export async function startServer(): Promise<{ url: string }> {
     }),
   );
 
-  await new Promise<void>((resolve) => {
-    app.listen(env.PORT, resolve);
+  // No Express 5 o callback do listen recebe o erro (ex.: porta ja em uso).
+  await new Promise<void>((resolve, reject) => {
+    app.listen(env.PORT, (error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
   });
 
   return { url: `http://localhost:${env.PORT}/graphql` };

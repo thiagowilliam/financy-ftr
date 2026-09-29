@@ -10,8 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import type { TransactionKind } from "@/components/ui/transaction-type";
-import { TransactionTypeToggle } from "@/components/ui/transaction-type-toggle";
 import { useCategories, useCreateCategory, useUpdateCategory } from "@/hooks/use-categories";
 import { GraphQLRequestError, getErrorMessage } from "@/lib/graphql/client";
 import type { PaletteColor } from "@/styles/tokens";
@@ -65,9 +63,6 @@ type CategoryFormProps = {
 function CategoryForm({ category, onSuccess }: CategoryFormProps) {
   const [name, setName] = useState(category?.name ?? "");
   const [description, setDescription] = useState(category?.description ?? "");
-  const [type, setType] = useState<TransactionKind>(
-    category?.type === "INCOME" ? "income" : "expense",
-  );
   const [icon, setIcon] = useState(
     category ? getCategoryIcon(category.icon).value : categoryIconOptions[0].value,
   );
@@ -120,7 +115,8 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
     const input: CategoryInput = {
       name: name.trim(),
       description: description.trim() || null,
-      type: type === "income" ? "INCOME" : "EXPENSE",
+      // O formulário não escolhe mais o tipo: novas categorias são de saída e a edição mantém o atual.
+      type: category?.type ?? "EXPENSE",
       icon,
       color: paletteColorToHex(color),
     };
@@ -173,7 +169,6 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
         onChange={(e) => setDescription(e.target.value)}
         maxLength={DESCRIPTION_MAX_LENGTH}
       />
-      <TransactionTypeToggle value={type} onValueChange={setType} name="category-type" />
       <CategoryIconPicker value={icon} onValueChange={setIcon} />
       <CategoryColorPicker value={color} onValueChange={setColor} />
 

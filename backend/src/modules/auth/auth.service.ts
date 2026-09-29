@@ -5,6 +5,7 @@ import { UnauthorizedError } from "../../shared/errors/unauthorized.error.js";
 import { signToken } from "../../utils/jwt.js";
 import { comparePassword, hashPassword } from "../../utils/password.js";
 import { assertEmail, assertMinLength } from "../../utils/validators.js";
+import { DEFAULT_CATEGORIES } from "../category/default-categories.js";
 import { mapUser } from "../user/user.service.js";
 import type { AuthPayload } from "./dtos/auth.payload.js";
 import type { SignInInput } from "./dtos/sign-in.input.js";
@@ -18,7 +19,13 @@ export const authService = {
 
     try {
       const user = await prisma.user.create({
-        data: { name, email, password: await hashPassword(password) },
+        data: {
+          name,
+          email,
+          password: await hashPassword(password),
+          // Todo usuario novo ja comeca com as categorias padrao.
+          categories: { create: [...DEFAULT_CATEGORIES] },
+        },
       });
 
       return { token: signToken(user.id), user: mapUser(user) };
