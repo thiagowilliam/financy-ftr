@@ -14,22 +14,22 @@ export const TRANSACTIONS_PER_PAGE = 10;
 export const transactionKeys = {
   all: ["transactions"] as const,
   lists: () => [...transactionKeys.all, "list"] as const,
-  list: (filters: TransactionFilters, page: number) =>
-    [...transactionKeys.lists(), { ...filters, page }] as const,
+  list: (filters: TransactionFilters, page: number, perPage: number) =>
+    [...transactionKeys.lists(), { ...filters, page, perPage }] as const,
 };
 
-export const transactionsPageQueryOptions = (filters: TransactionFilters, page: number) =>
+export const transactionsPageQueryOptions = (
+  filters: TransactionFilters,
+  page: number,
+  perPage = TRANSACTIONS_PER_PAGE,
+) =>
   queryOptions({
-    queryKey: transactionKeys.list(filters, page),
+    queryKey: transactionKeys.list(filters, page, perPage),
     queryFn: async ({ signal }) => {
       const data = await graphqlRequest<
         { transactionsPage: TransactionPage },
         { filters: TransactionFilters; pagination: { page: number; perPage: number } }
-      >(
-        TRANSACTIONS_PAGE,
-        { filters, pagination: { page, perPage: TRANSACTIONS_PER_PAGE } },
-        signal,
-      );
+      >(TRANSACTIONS_PAGE, { filters, pagination: { page, perPage } }, signal);
       return data.transactionsPage;
     },
     // Mantém a página anterior na tela enquanto a próxima carrega (sem "piscar" a tabela).

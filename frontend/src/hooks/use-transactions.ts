@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { categoryKeys } from "@/api/categories";
+import { dashboardKeys } from "@/api/dashboard";
 import {
   createTransaction,
   deleteTransaction,
@@ -9,13 +10,13 @@ import {
 } from "@/api/transactions";
 import type { TransactionFilters } from "@/types";
 
-export function useTransactionsPage(filters: TransactionFilters, page: number) {
-  return useQuery(transactionsPageQueryOptions(filters, page));
+export function useTransactionsPage(filters: TransactionFilters, page: number, perPage?: number) {
+  return useQuery(transactionsPageQueryOptions(filters, page, perPage));
 }
 
 /**
- * Toda alteração em transações muda a paginação/filtros e a contagem de
- * transações exibida nas categorias, então invalidamos os dois grupos.
+ * Toda alteração em transações muda a paginação/filtros, a contagem de
+ * transações das categorias e os totais do dashboard.
  */
 function useInvalidateTransactions() {
   const queryClient = useQueryClient();
@@ -23,6 +24,7 @@ function useInvalidateTransactions() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: transactionKeys.all }),
       queryClient.invalidateQueries({ queryKey: categoryKeys.all }),
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
     ]);
 }
 

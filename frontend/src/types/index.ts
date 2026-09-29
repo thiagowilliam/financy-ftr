@@ -74,3 +74,18 @@ export interface TransactionPage {
   perPage: number
   totalPages: number
 }
+
+export interface CategorySpending {
+  category: Pick<Category, "id" | "name" | "icon" | "color">
+  transactionCount: number
+  /** Soma das despesas em centavos */
+  total: number
+}
+
+/** Valores em centavos */
+export interface DashboardSummary {
+  balance: number
+  periodIncome: number
+  periodExpense: number
+  topExpenseCategories: CategorySpending[]
+}
