@@ -110,10 +110,12 @@ mutation CreateTransactionSemCategoria {
   }
 }
 
-mutation CreateTransactionTipoDivergente($categoryId: ID) {
+# Categorias nao tem tipo fixo para transacoes: uma entrada pode usar
+# uma categoria criada como despesa (ex.: venda de itens em "Mercado").
+mutation CreateTransactionEntradaEmCategoriaDeDespesa($categoryId: ID) {
   createTransaction(
     data: {
-      description: "Tipo errado"
+      description: "Venda de itens usados"
       amount: 1000
       type: INCOME
       date: "2026-09-01T12:00:00.000Z"
@@ -155,6 +157,25 @@ query TransactionsFiltradas($filters: ListTransactionsInput) {
   transactions(filters: $filters) {
     id description amount date
     category { name type }
+  }
+}
+
+# Busca, filtros e paginacao (padrao: pagina 1, 10 por pagina, maximo 100)
+query TransactionsPage {
+  transactionsPage(
+    filters: {
+      search: "aluguel"
+      type: EXPENSE
+      startDate: "2026-09-01T00:00:00.000Z"
+      endDate: "2026-09-30T23:59:59.999Z"
+    }
+    pagination: { page: 1, perPage: 10 }
+  ) {
+    total page perPage totalPages
+    items {
+      id description amount type date
+      category { id name icon color }
+    }
   }
 }
 
