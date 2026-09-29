@@ -33,6 +33,12 @@ query Me {
   me { id name email createdAt updatedAt }
 }
 
+mutation UpdateProfile {
+  updateProfile(data: { name: "Usuario Demo" }) {
+    id name email updatedAt
+  }
+}
+
 # ------------------------- CATEGORIAS ------------------------
 
 query Categories {
