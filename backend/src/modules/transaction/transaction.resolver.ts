@@ -12,17 +12,6 @@ import { TransactionPage } from "./transaction-page.model.js";
 @Authorized()
 @Resolver(() => Transaction)
 export class TransactionResolver {
-  @Query(() => [Transaction], {
-    description: "Lista as transacoes do usuario com filtros opcionais.",
-  })
-  async transactions(
-    @Ctx() ctx: Context,
-    @Arg("filters", () => ListTransactionsInput, { nullable: true })
-    filters?: ListTransactionsInput | null,
-  ): Promise<Transaction[]> {
-    return transactionService.list(requireUserId(ctx), filters);
-  }
-
   @Query(() => TransactionPage, {
     description: "Lista as transacoes do usuario com filtros e paginacao.",
   })

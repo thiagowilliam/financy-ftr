@@ -1,8 +1,8 @@
-import { Toaster } from "@/components/ui/sonner"
-import { Header } from "./Header"
+import { Toaster } from "@/components/ui/sonner";
+import { Header } from "./Header";
 
 interface LayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
@@ -12,5 +12,5 @@ export function Layout({ children }: LayoutProps) {
       <main className="mx-auto px-16 py-4">{children}</main>
       <Toaster />
     </div>
-  )
+  );
 }

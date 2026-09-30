@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -10,8 +10,8 @@
       "src/**/*.ts",
       "prisma/**/*.ts",
       "*.json",
-      "!node_modules/**",
-      "!prisma/migrations/**",
+      "!node_modules",
+      "!prisma/migrations",
       "!**/*.db",
       "!**/*.db-journal"
     ]
@@ -35,7 +35,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
         "noUnusedVariables": "error",
         "noUnusedImports": "error"

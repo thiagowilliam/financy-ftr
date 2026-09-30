@@ -5,6 +5,8 @@ import { verifyToken } from "../utils/jwt.js";
 
 export interface Context {
   userId: string | null;
+  /** IP de origem, usado no limite de tentativas de login. */
+  ip: string | null;
   prisma: PrismaClient;
 }
 
@@ -21,5 +23,5 @@ export function createContext({ req }: { req: Request }): Context {
     }
   }
 
-  return { userId, prisma };
+  return { userId, ip: req.ip ?? null, prisma };
 }

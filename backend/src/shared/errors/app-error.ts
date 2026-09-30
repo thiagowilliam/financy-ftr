@@ -6,6 +6,7 @@ export type AppErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "BAD_USER_INPUT"
+  | "TOO_MANY_REQUESTS"
   | "INTERNAL_SERVER_ERROR";
 
 export class AppError extends GraphQLError {

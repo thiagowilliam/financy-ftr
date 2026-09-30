@@ -1,126 +1,72 @@
-import { apolloClient } from "@/lib/apollo"
-import { queryClient } from "@/lib/query-client"
-import { LOGIN } from "@/lib/graphql/mutations/Login"
-import { REGISTER } from "@/lib/graphql/mutations/Register"
-import type { LoginInput, RegisterInput, User } from "@/types"
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { graphqlRequest } from "@/lib/graphql/client";
+import { LOGIN } from "@/lib/graphql/mutations/Login";
+import { REGISTER } from "@/lib/graphql/mutations/Register";
+import { queryClient } from "@/lib/query-client";
+import type { LoginInput, RegisterInput, User } from "@/types";
 
-type RegisterMutationData = {
-  signUp: {
-    token: string
-    user: User
-  }
-}
-
-type LoginMutationData = {
-  signIn: {
-    token: string
-    user: User
-  }
-}
+type AuthPayload = {
+  token: string;
+  user: User;
+};
 
 interface AuthState {
-  user: User | null
-  token: string | null
-  isAuthenticated: boolean
-  signup: (data: RegisterInput) => Promise<boolean>
-  login: (data: LoginInput) => Promise<boolean>
-  logout: () => void
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  signup: (data: RegisterInput) => Promise<boolean>;
+  login: (data: LoginInput) => Promise<boolean>;
+  logout: () => void;
   /** Atualiza os dados do usuário logado (ex.: após editar o perfil). */
-  setUser: (user: User) => void
+  setUser: (user: User) => void;
 }
 
-export const useAuthStore = create<AuthState>() (
-    persist(
-      (set) => ({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => {
+      /** Guarda a sessão devolvida por signIn/signUp. Erros sobem para a tela tratar. */
+      const startSession = ({ token, user }: AuthPayload) => {
+        set({
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+          },
+          token,
+          isAuthenticated: true,
+        });
+        return true;
+      };
+
+      return {
         user: null,
         token: null,
         isAuthenticated: false,
-        login: async (loginData: LoginInput) => {
-          try{
-              const {data} = await apolloClient.mutate<LoginMutationData, { data: LoginInput }>({
-                mutation: LOGIN,
-                variables: {
-                  data: {
-                    email: loginData.email,
-                    password: loginData.password
-                  }
-                }
-              })
-
-              if(data?.signIn){
-                const { user, token } = data.signIn
-                set({
-                  user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt
-                  },
-                  token,
-                  isAuthenticated: true
-                })
-                return true
-              }
-              return false
-          }catch(error){
-            console.log("Erro ao fazer o login")
-            throw error
-          }
+        login: async ({ email, password }: LoginInput) => {
+          const data = await graphqlRequest<{ signIn: AuthPayload }, { data: LoginInput }>(LOGIN, {
+            data: { email, password },
+          });
+          return startSession(data.signIn);
         },
-        signup: async (registerData: RegisterInput) => {
-          try{
-              const { data } = await apolloClient.mutate<
-              RegisterMutationData,
-                {data: RegisterInput}
-              >({
-                mutation: REGISTER,
-                variables: {
-                  data: {
-                      name: registerData.name,
-                      email: registerData.email,
-                      password: registerData.password
-                  }
-                }
-              })
-              if(data?.signUp){
-                const { token, user } = data.signUp
-                set({
-                  user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt
-                  },
-                  token,
-                  isAuthenticated: true
-                })
-                return true
-              }
-              return false
-          }catch(error){
-            console.log("Erro ao fazer o cadastro")
-            throw error
-          }
+        signup: async ({ name, email, password }: RegisterInput) => {
+          const data = await graphqlRequest<{ signUp: AuthPayload }, { data: RegisterInput }>(
+            REGISTER,
+            { data: { name, email, password } },
+          );
+          return startSession(data.signUp);
         },
         setUser: (user: User) => {
-          set({ user })
+          set({ user });
         },
         logout: () => {
-          set({
-            user:null,
-            token: null,
-            isAuthenticated: false
-          })
-          apolloClient.clearStore()
-          queryClient.clear()
+          set({ user: null, token: null, isAuthenticated: false });
+          queryClient.clear();
         },
-      }),
-      {
-        name: 'auth-storage'
-      }
-    )
-)
+      };
+    },
+    { name: "auth-storage" },
+  ),
+);

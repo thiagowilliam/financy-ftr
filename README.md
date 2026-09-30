@@ -7,7 +7,7 @@ O projeto é dividido em dois pacotes independentes:
 | Pacote | O que é | Porta | Documentação |
 | --- | --- | --- | --- |
 | [`backend/`](backend) | API GraphQL com autenticação JWT e persistência em SQLite | `4000` | [backend/README.md](backend/README.md) |
-| [`frontend/`](frontend) | SPA em React consumindo a API via Apollo Client | `5173` | [frontend/README.md](frontend/README.md) |
+| [`frontend/`](frontend) | SPA em React (Vite) consumindo a API GraphQL com React Query | `5173` | [frontend/README.md](frontend/README.md) |
 
 ## Início rápido
 
@@ -20,7 +20,7 @@ pnpm install
 cp .env.example .env          # preencha o JWT_SECRET
 pnpm prisma generate
 pnpm prisma migrate dev
-pnpm seed                     # cria o usuário demo@financy.dev / 123456
+pnpm seed                     # cria o usuário demo@financy.dev / 12345678
 pnpm dev                      # http://localhost:4000/graphql
 
 # Terminal 2 — Web
@@ -29,7 +29,9 @@ pnpm install
 pnpm dev                      # http://localhost:5173
 ```
 
-O frontend aponta para `http://localhost:4000/graphql`, então a API precisa estar no ar antes do login funcionar.
+O frontend aponta para `http://localhost:4000/graphql` (configurável por `VITE_API_URL` em `frontend/.env`), então a API precisa estar no ar antes do login funcionar. A API só aceita requisições da origem `http://localhost:5173` por padrão (`CORS_ORIGIN` no `backend/.env`).
+
+Para rodar os testes: `pnpm test` dentro de cada pacote.
 
 ## Arquitetura
 
@@ -40,7 +42,7 @@ O frontend aponta para `http://localhost:4000/graphql`, então a API precisa est
 │  React 19 + React Router │         │  Express 5                          │
 │  shadcn/ui + Tailwind    │         │    └── Apollo Server 5  /graphql    │
 │  Zustand (auth + persist)│  HTTP   │          └── TypeGraphQL (schema)   │
-│  Apollo Client ──────────┼────────▶│                └── Resolvers        │
+│  React Query + fetch ────┼────────▶│                └── Resolvers        │
 │                          │ GraphQL │                    └── Services     │
 │                          │  + JWT  │                        └── Prisma   │
 └──────────────────────────┘         └─────────────────┬───────────────────┘
@@ -51,7 +53,7 @@ O frontend aponta para `http://localhost:4000/graphql`, então a API precisa est
                                                   └─────────┘
 ```
 
-O backend segue uma arquitetura em camadas, organizada por módulo de domínio (`auth`, `user`, `category`, `transaction`). Cada módulo repete a mesma estrutura:
+O backend segue uma arquitetura em camadas, organizada por módulo de domínio (`auth`, `user`, `category`, `transaction`, `dashboard`). Cada módulo repete a mesma estrutura:
 
 - **Resolver** — expõe as queries e mutations, aplica `@Authorized()` e extrai o `userId` do contexto. Não contém regra de negócio.
 - **Service** — concentra a regra de negócio, a validação dos inputs e o acesso ao Prisma. É onde a posse do registro é verificada.
@@ -76,23 +78,28 @@ financy/
 │       ├── server.ts             # Express + Apollo + CORS
 │       ├── config/env.ts         # leitura e validação das variáveis de ambiente
 │       ├── graphql/              # montagem do schema, context e auth-checker
-│       ├── modules/              # domínios: auth, user, category, transaction
+│       ├── modules/              # domínios: auth, user, category, transaction, dashboard
 │       ├── middlewares/          # interceptor de erros e logger
 │       ├── shared/               # enums e classes de erro da aplicação
 │       ├── lib/prisma.ts         # instância única do Prisma Client
-│       └── utils/                # jwt, hash de senha e validadores
+│       └── utils/                # jwt, hash de senha, validadores e rate limiter
 └── frontend/
     └── src/
         ├── main.tsx              # entrypoint (BrowserRouter)
         ├── App.tsx               # rotas públicas e protegidas
-        ├── pages/                # telas (Login, Signup, StyleGuide, …)
+        ├── pages/                # Login, Signup, Dashboard, Transactions, Categories, Profile
+        ├── api/                  # acesso à API por domínio + query keys
+        ├── hooks/                # hooks do React Query
         ├── components/
         │   ├── ui/               # design system (shadcn/ui customizado)
+        │   ├── categories/       # telas e diálogos de categorias
+        │   ├── transactions/     # tabela, filtros e diálogos de transações
+        │   ├── dashboard/        # cards do dashboard
         │   └── brand/            # logo
-        ├── stores/               # estado global com Zustand
+        ├── stores/               # estado global com Zustand (auth)
         ├── lib/
-        │   ├── apollo.ts         # client GraphQL
-        │   └── graphql/          # queries e mutations
+        │   ├── graphql/          # client (fetch + token), queries e mutations
+        │   └── query-client.ts   # configuração do React Query
         ├── styles/
         │   ├── tokens.ts         # fonte da verdade do design system
         │   └── globals.css       # camada base do Tailwind
@@ -122,14 +129,23 @@ Apagar um usuário apaga em cascata suas categorias e transações. Apagar uma c
 - **pnpm** é o gerenciador de pacotes dos dois pacotes.
 - **Biome** cuida de lint, format e organização de imports em ambos. Rode `pnpm lint` antes de commitar e `pnpm lint:fix` para as correções automáticas.
 - **TypeScript** em modo estrito nos dois lados; `pnpm typecheck` valida sem emitir arquivos.
+- **Testes** com o runner nativo do Node (`node:test`), sem dependências extras: `pnpm test` em cada pacote.
 - O backend roda apenas em modo desenvolvimento, via `tsx watch`, sem etapa de build.
 
-## Estado atual
+## Funcionalidades
 
-O que já funciona ponta a ponta: cadastro, login, logout e persistência da sessão no frontend; CRUD completo de categorias e transações na API, com isolamento por usuário.
+| Requisito | Back-end | Front-end |
+| --- | --- | --- |
+| Criar conta e fazer login | `signUp` / `signIn` | `/signup`, `/login` |
+| Ver e gerenciar apenas os próprios dados | `@Authorized()` + filtro por `userId` em todo service | token em toda requisição, logout automático se expirar |
+| Criar, editar, deletar e listar transações | `createTransaction`, `updateTransaction`, `deleteTransaction`, `transactionsPage` | `/transactions` |
+| Criar, editar, deletar e listar categorias | `createCategory`, `updateCategory`, `deleteCategory`, `categories` | `/categories` |
+| Resumo financeiro | `dashboardSummary` | `/` (dashboard) |
+| Perfil | `me`, `updateProfile` | `/profile` |
 
-Pendências conhecidas, úteis para quem for continuar o trabalho:
+## Segurança
 
-- O `authLink` do Apollo Client está comentado em [`frontend/src/lib/apollo.ts`](frontend/src/lib/apollo.ts), então o token ainda não é enviado nas operações autenticadas — as telas de categorias e transações vão precisar disso.
-- A URL da API está fixa no código do frontend, sem variável de ambiente.
-- As telas de categorias, transações e dashboard ainda não existem; a rota `/` exibe o style guide do design system.
+- Senhas com hash `bcrypt` (mínimo de 8 caracteres no cadastro) e JWT com validade de 7 dias.
+- Login limitado a 5 falhas por IP + e-mail a cada 15 minutos (`TOO_MANY_REQUESTS`).
+- O login não revela se o e-mail existe nem as regras de senha: a resposta de erro é sempre a mesma.
+- CORS restrito à origem do frontend por padrão.

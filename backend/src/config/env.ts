@@ -36,5 +36,5 @@ export const env = {
   JWT_SECRET: requireEnv("JWT_SECRET"),
   DATABASE_URL: requireEnv("DATABASE_URL"),
   PORT: parsePort(optionalEnv("PORT", "4000")),
-  CORS_ORIGIN: optionalEnv("CORS_ORIGIN", "*"),
+  CORS_ORIGIN: optionalEnv("CORS_ORIGIN", "http://localhost:5173"),
 } as const;

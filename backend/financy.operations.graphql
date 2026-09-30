@@ -10,14 +10,14 @@
 # ---------------------------- AUTH ---------------------------
 
 mutation SignUp {
-  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "123456" }) {
+  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "12345678" }) {
     token
     user { id name email createdAt }
   }
 }
 
 mutation SignIn {
-  signIn(data: { email: "demo@financy.dev", password: "123456" }) {
+  signIn(data: { email: "demo@financy.dev", password: "12345678" }) {
     token
     user { id name email }
   }
@@ -145,24 +145,23 @@ mutation CreateTransactionAmountInvalido {
   }
 }
 
-query Transactions {
-  transactions {
-    id description amount type date
-    category { id name color }
-  }
-}
-
 query TransactionsPorTipo {
-  transactions(filters: { type: EXPENSE }) {
-    id description amount date
-    category { name }
+  transactionsPage(filters: { type: EXPENSE }) {
+    total
+    items {
+      id description amount date
+      category { name }
+    }
   }
 }
 
 query TransactionsFiltradas($filters: ListTransactionsInput) {
-  transactions(filters: $filters) {
-    id description amount date
-    category { name type }
+  transactionsPage(filters: $filters) {
+    total
+    items {
+      id description amount date
+      category { name type }
+    }
   }
 }
 

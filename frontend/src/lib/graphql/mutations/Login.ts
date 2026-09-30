@@ -1,6 +1,4 @@
-import { gql } from "@apollo/client"
-
-export const LOGIN = gql`
+export const LOGIN = /* GraphQL */ `
   mutation SignIn($data: SignInInput!) {
     signIn(data: $data) {
       token
@@ -13,4 +11,4 @@ export const LOGIN = gql`
       }
     }
   }
-`
+`;
