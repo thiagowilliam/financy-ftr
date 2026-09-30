@@ -1,34 +1,34 @@
-import { Link, useLocation, useNavigate } from "react-router-dom"
-import { useAuthStore } from "../stores/auth"
-import logo from "@/assets/logo.svg"
-import { Avatar, AvatarFallback } from "./ui/avatar"
-import { cn } from "@/lib/utils"
-import { getInitials } from "@/lib/format"
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import logo from "@/assets/logo.svg";
+import { getInitials } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { useAuthStore } from "../stores/auth";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
-const activeLinkClass = "text-brand-base font-semibold"
+const activeLinkClass = "text-brand-base font-semibold";
 
 export function Header() {
-  const { user, isAuthenticated } = useAuthStore()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const isDashboardPage = location.pathname === "/"
-  const isTransactionsPage = location.pathname === "/transactions"
-  const isCategoriesPage = location.pathname === "/categories"
+  const { user, isAuthenticated } = useAuthStore();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isDashboardPage = location.pathname === "/";
+  const isTransactionsPage = location.pathname === "/transactions";
+  const isCategoriesPage = location.pathname === "/categories";
 
-  const initials = getInitials(user?.name ?? "")
+  const initials = getInitials(user?.name ?? "");
 
   const goToProfile = () => {
-    navigate("/profile")
-  }
+    navigate("/profile");
+  };
 
   return (
-    <div className="w-full px-16 pt-6 bg-white border-b-2 border-gray-200 pb-4">
+    <div className="w-full border-gray-200 border-b-2 bg-white px-16 pt-6 pb-4">
       {isAuthenticated && (
-        <div className="flex items-center justify-between w-full">
+        <div className="flex w-full items-center justify-between">
           <div className="min-w-48">
             <img src={logo} alt="Financy" className="h-6 w-auto" />
           </div>
-          <div className="flex items-center gap-5 text-sm text-gray-600">
+          <div className="flex items-center gap-5 text-gray-600 text-sm">
             <Link to="/" className={cn(isDashboardPage && activeLinkClass)}>
               Dashboard
             </Link>
@@ -48,9 +48,7 @@ export function Header() {
                 className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <Avatar>
-                  <AvatarFallback className="bg-gray-300 text-gray-800">
-                    {initials}
-                  </AvatarFallback>
+                  <AvatarFallback className="bg-gray-300 text-gray-800">{initials}</AvatarFallback>
                 </Avatar>
               </button>
             </div>
@@ -58,5 +56,5 @@ export function Header() {
         </div>
       )}
     </div>
-  )
+  );
 }

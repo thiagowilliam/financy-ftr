@@ -5,7 +5,7 @@ import { hashPassword } from "../src/utils/password.js";
 const prisma = new PrismaClient();
 
 const DEMO_EMAIL = "demo@financy.dev";
-const DEMO_PASSWORD = "123456";
+const DEMO_PASSWORD = "12345678";
 
 const INCOME = "INCOME";
 const EXPENSE = "EXPENSE";

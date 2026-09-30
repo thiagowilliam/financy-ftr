@@ -1,41 +1,43 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { ExamplePage } from "@/pages/Example";
 import { Layout } from "./components/Layout";
-import { Login } from "./pages/Login";
-import { Signup } from "./pages/Signup";
-import { useAuthStore } from "./stores/auth";
-import { Dashboard } from "./pages/Dashboard";
-import { Transactions } from "./pages/Transactions";
 import { Categories } from "./pages/Categories";
+import { Dashboard } from "./pages/Dashboard";
+import { Login } from "./pages/Login";
 import { Profile } from "./pages/Profile";
+import { Signup } from "./pages/Signup";
+import { Transactions } from "./pages/Transactions";
+import { useAuthStore } from "./stores/auth";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
+  const { isAuthenticated } = useAuthStore();
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/" replace />
+  const { isAuthenticated } = useAuthStore();
+  return !isAuthenticated ? children : <Navigate to="/" replace />;
 }
 
 export function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/login" element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        } />
-        <Route path="/signup" element={
-          <PublicRoute>
-            <Signup />
-          </PublicRoute>} />
-        <Route path="/exemplo" element={
-          <PublicRoute>
-            <ExamplePage />
-          </PublicRoute>} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
         <Route
           path="/"
           element={
@@ -68,6 +70,7 @@ export function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   );

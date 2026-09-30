@@ -1,4 +1,5 @@
-import { Arg, Mutation, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import type { Context } from "../../graphql/context.js";
 import { authService } from "./auth.service.js";
 import { AuthPayload } from "./dtos/auth.payload.js";
 import { SignInInput } from "./dtos/sign-in.input.js";
@@ -12,7 +13,10 @@ export class AuthResolver {
   }
 
   @Mutation(() => AuthPayload, { description: "Autentica e devolve o token." })
-  async signIn(@Arg("data", () => SignInInput) data: SignInInput): Promise<AuthPayload> {
-    return authService.signIn(data);
+  async signIn(
+    @Arg("data", () => SignInInput) data: SignInInput,
+    @Ctx() ctx: Context,
+  ): Promise<AuthPayload> {
+    return authService.signIn(data, ctx.ip);
   }
 }

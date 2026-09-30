@@ -188,16 +188,6 @@ export const transactionService = {
     return true;
   },
 
-  async list(userId: string, filters?: ListTransactionsInput | null): Promise<Transaction[]> {
-    const transactions = await prisma.transaction.findMany({
-      where: buildWhere(userId, filters),
-      include: { category: true },
-      orderBy: TRANSACTION_ORDER,
-    });
-
-    return transactions.map(mapTransaction);
-  },
-
   async listPage(
     userId: string,
     filters?: ListTransactionsInput | null,

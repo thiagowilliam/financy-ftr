@@ -13,10 +13,7 @@ export function assertRequiredString(value: unknown, field: string): string {
 export function assertMinLength(value: unknown, min: number, field: string): string {
   const parsed = assertRequiredString(value, field);
   if (parsed.length < min) {
-    throw new ValidationError(
-      `O campo "${field}" deve ter no minimo ${min} caracteres.`,
-      field,
-    );
+    throw new ValidationError(`O campo "${field}" deve ter no minimo ${min} caracteres.`, field);
   }
   return parsed;
 }

@@ -1,6 +1,6 @@
 # Financy — Backend
 
-API GraphQL de finanças pessoais com autenticação JWT, isolamento de dados por usuário e CRUD de categorias e transações.
+API GraphQL de finanças pessoais com autenticação JWT, isolamento de dados por usuário, CRUD de categorias e transações e um resumo para o dashboard.
 
 É consumida pela SPA em [`frontend/`](../frontend/README.md). A visão geral do projeto está no [README da raiz](../README.md).
 
@@ -24,10 +24,12 @@ Preencha o `.env`:
 JWT_SECRET=troque-por-um-segredo-forte
 DATABASE_URL="file:./dev.db"
 PORT=4000
-CORS_ORIGIN=*
+CORS_ORIGIN=http://localhost:5173
 ```
 
 As variáveis são lidas pelo recurso nativo do Node (`process.loadEnvFile`) em `src/config/env.ts`. `JWT_SECRET` e `DATABASE_URL` são obrigatórias e a aplicação falha na inicialização se estiverem ausentes.
+
+`CORS_ORIGIN` aceita uma lista separada por vírgulas. O padrão é `http://localhost:5173` (o dev server do frontend); `*` libera qualquer origem e só deve ser usado em testes locais.
 
 ## Sequência de migrations
 
@@ -166,7 +168,7 @@ pnpm dev
 
 Playground disponível em `http://localhost:4000/graphql`.
 
-Usuário do seed: `demo@financy.dev` / `123456`.
+Usuário do seed: `demo@financy.dev` / `12345678`.
 
 ## Adicionar um usuário
 
@@ -184,14 +186,14 @@ O seed é idempotente: ele faz `upsert` do usuário e apaga as categorias e tran
 
 ```graphql
 mutation SignUp {
-  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "123456" }) {
+  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "12345678" }) {
     token
     user { id name email }
   }
 }
 ```
 
-A senha passa por `bcrypt` antes de ser gravada e a resposta já devolve o JWT pronto para ser usado no header `Authorization`. O e-mail é normalizado para minúsculas e precisa ser único — um e-mail repetido retorna um erro `CONFLICT`. A senha tem mínimo de 6 caracteres.
+A senha passa por `bcrypt` antes de ser gravada e a resposta já devolve o JWT pronto para ser usado no header `Authorization`. O e-mail é normalizado para minúsculas e precisa ser único — um e-mail repetido retorna um erro `CONFLICT`. A senha tem mínimo de 8 caracteres (a mesma regra da tela de cadastro).
 
 **3. Inspecionar ou editar direto no banco.** Para conferir o que foi gravado ou ajustar um registro pontual:
 
@@ -213,6 +215,7 @@ Evite criar usuários por aqui: o campo `password` guarda um hash, e um valor em
 | `pnpm lint:fix` | Aplica as correções automáticas |
 | `pnpm format` | Formata os arquivos |
 | `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Testes unitários com o runner nativo do Node (`node:test` via `tsx --test`) |
 
 Os comandos do Prisma que não têm atalho no `package.json` são chamados direto pelo binário: `pnpm prisma studio`, `pnpm prisma migrate reset`, `pnpm prisma migrate deploy`.
 
@@ -274,7 +277,8 @@ backend/
     │   └── auth-checker.ts       # regra do @Authorized()
     ├── modules/                  # um diretório por domínio
     │   ├── auth/                 # signUp e signIn
-    │   ├── user/                 # query me
+    │   ├── user/                 # query me e mutation updateProfile
+    │   ├── dashboard/            # resumo: saldo, receitas, despesas e categorias
     │   ├── category/             # CRUD de categorias
     │   └── transaction/          # CRUD de transações
     ├── middlewares/
@@ -284,7 +288,8 @@ backend/
     │   ├── enums/                # TransactionType
     │   └── errors/               # AppError e suas especializações
     ├── lib/prisma.ts             # instância única do Prisma Client
-    └── utils/                    # jwt, password, require-user-id, validators
+    └── utils/                    # jwt, password, rate-limiter, require-user-id, validators
+                                  # (*.test.ts ao lado de cada arquivo testado)
 ```
 
 ### Anatomia de um módulo
@@ -301,10 +306,27 @@ modules/transaction/
 
 O resolver é uma casca fina: ele resolve o `userId` com `requireUserId(ctx)` e delega ao service. Toda validação, checagem de posse e conversão de tipo acontece no service. Erros de domínio são lançados como subclasses de `AppError` (`ConflictError`, `NotFoundError`, `UnauthorizedError`, `ValidationError`) e o `ErrorInterceptor` os traduz para uma resposta GraphQL com código legível, em vez de vazar o erro cru do Prisma.
 
+## Segurança
+
+- **Senhas** com hash `bcrypt`; o campo `password` não existe no schema GraphQL.
+- **JWT** com validade de 7 dias, enviado em `Authorization: Bearer <token>`.
+- **Limite de tentativas de login**: 5 falhas por IP + e-mail em 15 minutos bloqueiam novas tentativas com o erro `TOO_MANY_REQUESTS` (ver `src/utils/rate-limiter.ts`). Um login bem-sucedido zera o contador. O controle é em memória, suficiente para uma instância única.
+- **`signIn` não revela regras de senha**: ele só exige que a senha não esteja vazia e responde sempre `Credenciais invalidas.`, exista ou não o e-mail. O tamanho mínimo é validado apenas no `signUp`.
+- **CORS restrito** à origem do frontend por padrão (`CORS_ORIGIN`).
+
+## Testes
+
+```bash
+pnpm test
+```
+
+Usam o runner nativo do Node (`node:test` + `node:assert`), sem dependências extras. Cobrem os validadores de entrada, a emissão/verificação de JWT e o limitador de tentativas de login.
+
 ## Decisões relevantes
 
 - SQLite não suporta `enum` no Prisma, então `type` é `String` no banco. O enum `TransactionType` vive no TypeScript, é registrado com `registerEnumType` e a conversão acontece no service.
 - Valores monetários são `Int` em CENTAVOS. O sinal vem do `type`, nunca do valor. Nada de Float ou Decimal.
+- A listagem de transações é sempre paginada, pela query `transactionsPage` (filtros por busca, tipo, categoria e período; padrão 10 por página, máximo 100).
 - Toda leitura e escrita filtra por `userId` do contexto autenticado. Update e delete fazem uma checagem de posse com `findFirst({ where: { id, userId } })` antes de agir.
 - O campo `password` não tem `@Field` e não existe no schema GraphQL.
 - Deletar categoria não deleta transações (`onDelete: SetNull`). Deletar usuário deleta em cascata categorias e transações.
@@ -317,7 +339,7 @@ O resolver é uma casca fina: ele resolve o `userId` com `requireUserId(ctx)` e 
 
 ```graphql
 mutation SignUp {
-  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "123456" }) {
+  signUp(data: { name: "Thiago", email: "thiago@financy.dev", password: "12345678" }) {
     token
     user { id name email }
   }
@@ -328,7 +350,7 @@ mutation SignUp {
 
 ```graphql
 mutation SignIn {
-  signIn(data: { email: "demo@financy.dev", password: "123456" }) {
+  signIn(data: { email: "demo@financy.dev", password: "12345678" }) {
     token
     user { id name email }
   }
